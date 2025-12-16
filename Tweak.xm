@@ -1,16 +1,18 @@
-#define LD_DEBUG NO
-#import <UIKit/UIKit.h>
 #import <AudioToolbox/AudioToolbox.h>
-#import <objc/runtime.h>
-#import <notify.h>
-#import "FLEXManager.h"
-#import <rootless.h>
+#import <UIKit/UIKit.h>
 #import <dlfcn.h>
+#import <notify.h>
+#import <objc/runtime.h>
+#import <rootless.h>
 
-static BOOL tweakEnabled = YES;
-static NSUserDefaults *preferences = nil;
-static BOOL tune = NO;
-NSString *dylibPath = ROOT_PATH_NS(@"/Library/MobileSubstrate/DynamicLibraries/libFLEX.dylib");
+static BOOL gIsTweakEnabled = YES;
+static NSUserDefaults *gPreferences = nil;
+static NSString *gDylibPath = nil;
+
+@interface FLEXManager : NSObject
++ (instancetype)sharedManager;
+- (void)showExplorer;
+@end
 
 @interface SBApplication
 - (NSString *)bundleIdentifier;
@@ -32,133 +34,98 @@ static void preferencesChanged(CFNotificationCenterRef center, void *observer, C
 %hook SpringBoard
 
 - (BOOL)_handlePhysicalButtonEvent:(UIPressesEvent *)event {
-        BOOL upPressed = NO;
-        BOOL downPressed = NO;
+    BOOL upPressed = NO;
+    BOOL downPressed = NO;
 
-        for (UIPress *press in event.allPresses.allObjects) {
-            if (press.type == 102 && press.force == 1) {
-                upPressed = YES;
-            }
-            if (press.type == 103 && press.force == 1) {
-                downPressed = YES;
-            }
+    for (UIPress *press in event.allPresses.allObjects) {
+        if (press.type == 102 && press.force == 1) {
+            upPressed = YES;
         }
-        
-        if (upPressed && downPressed) {
-           // Is the tweak enabled?
-    NSString *currentID = NSBundle.mainBundle.bundleIdentifier;
-    if ([currentID isEqualToString:@"com.apple.springboard"]) {
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("com.joshua.VFPB.preferences.changed"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-
-        preferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
-
-        [preferences registerDefaults:@{
-            @"Enabled": @(tweakEnabled)
-        }];
-
-        tweakEnabled = [[preferences objectForKey:@"Enabled"] boolValue];
-
-    } else {
-        int regToken;
-        NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", currentID];
-        notify_register_dispatch(notifForBundle.UTF8String, &regToken, dispatch_get_main_queue(), ^(int token) {
-            dlopen(dylibPath.UTF8String, RTLD_NOW);
-	    NSLog(@"libraryHandle = %s", dlerror());
-            [[objc_getClass("FLEXManager") sharedManager] showExplorer];
-        });
+        if (press.type == 103 && press.force == 1) {
+            downPressed = YES;
+        }
+#if TARGET_IPHONE_SIMULATOR
+        if (press.type == 2227 && press.force == 1) {
+            upPressed = YES;
+        }
+        if (press.type == 2231 && press.force == 1) {
+            downPressed = YES;
+        }
+#endif
     }
 
-        // Do you want a tune?
-        if ([currentID isEqualToString:@"com.apple.springboard"]) {
-            CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("com.joshua.VFPB.preferences.changed.tune"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+    NSLog(@"[VolumeFLEX] event: %@", event);
 
-            preferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
-
-            [preferences registerDefaults:@{
-                @"tune": @(tune)
-            }];
-
-            tune = [[preferences objectForKey:@"tune"] boolValue];
-
-    } else {
-        int regToken;
-        NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", currentID];
-        notify_register_dispatch(notifForBundle.UTF8String, &regToken, dispatch_get_main_queue(), ^(int token) {
-            dlopen(dylibPath.UTF8String, RTLD_NOW);
-            [[objc_getClass("FLEXManager") sharedManager] showExplorer];
-        });
-    }
+    if (upPressed && downPressed) {
+        // Is the tweak enabled?
+        NSString *bid = NSBundle.mainBundle.bundleIdentifier;
+        if ([bid isEqualToString:@"com.apple.springboard"]) {
+            CFNotificationCenterAddObserver(
+                CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged,
+                CFSTR("com.joshua.VFPB.preferences.changed"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+            gPreferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
+            [gPreferences registerDefaults:@{@"Enabled" : @(gIsTweakEnabled)}];
+            gIsTweakEnabled = [[gPreferences objectForKey:@"Enabled"] boolValue];
+        } else {
+            int regToken;
+            NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", bid];
+            notify_register_dispatch(notifForBundle.UTF8String, &regToken, dispatch_get_main_queue(), ^(int token) {
+              dlopen(gDylibPath.UTF8String, RTLD_NOW);
+              [[objc_getClass("FLEXManager") sharedManager] showExplorer];
+            });
         }
+    }
 
-    if (tweakEnabled) {
-
-        SBApplication *frontmostApp = [(SpringBoard *)UIApplication.sharedApplication _accessibilityFrontMostApplication];
+    if (gIsTweakEnabled) {
+        SBApplication *frontmostApp =
+            [(SpringBoard *)UIApplication.sharedApplication _accessibilityFrontMostApplication];
 
         // Only proceed if the user is holding down both buttons
         if (upPressed && downPressed) {
-            if (tune) {
-                // Vibrate and play tune :D
-                AudioServicesPlaySystemSound(1328);
-            }
             [(SpringBoard *)UIApplication.sharedApplication _accessibilityFrontMostApplication];
+
             // if frontmostApp is true and the phone is not locked
             if (frontmostApp) {
-                notify_post([[NSString stringWithFormat:@"com.joshua.volumeflex/%@", frontmostApp.bundleIdentifier] UTF8String]);
+                notify_post([[NSString stringWithFormat:@"com.joshua.volumeflex/%@", frontmostApp.bundleIdentifier]
+                    UTF8String]);
             } else {
-                dlopen(dylibPath.UTF8String, RTLD_NOW);
+                dlopen(gDylibPath.UTF8String, RTLD_NOW);
                 [[objc_getClass("FLEXManager") sharedManager] showExplorer];
             }
         }
     }
+
     return %orig;
 }
 
 %end
 
 %ctor {
+#if TARGET_IPHONE_SIMULATOR
+    gDylibPath = @"/opt/simject/libVolumeFLEX.dylib";
+#else
+    gDylibPath = ROOT_PATH_NS(@"/usr/lib/libVolumeFLEX.dylib");
+#endif
+
     // Is the tweak enabled?
-    NSString *currentID = NSBundle.mainBundle.bundleIdentifier;
-    if ([currentID isEqualToString:@"com.apple.springboard"]) {
-        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("com.joshua.VFPB.preferences.changed"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-        
-        preferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
-
-        [preferences registerDefaults:@{
-            @"Enabled": @(tweakEnabled)
-        }];
-
-        tweakEnabled = [[preferences objectForKey:@"Enabled"] boolValue];
-        
+    NSString *bid = NSBundle.mainBundle.bundleIdentifier;
+    if ([bid isEqualToString:@"com.apple.springboard"]) {
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged,
+            CFSTR("com.joshua.VFPB.preferences.changed"), NULL, CFNotificationSuspensionBehaviorCoalesce);
+        gPreferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
+        [gPreferences registerDefaults:@{@"Enabled" : @(gIsTweakEnabled)}];
+        gIsTweakEnabled = [[gPreferences objectForKey:@"Enabled"] boolValue];
     } else {
         int regToken;
-        NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", currentID];
+        NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", bid];
         notify_register_dispatch(notifForBundle.UTF8String, &regToken, dispatch_get_main_queue(), ^(int token) {
-            dlopen(dylibPath.UTF8String, RTLD_NOW);
-            [[objc_getClass("FLEXManager") sharedManager] showExplorer];
+          dlopen(gDylibPath.UTF8String, RTLD_NOW);
+          [[objc_getClass("FLEXManager") sharedManager] showExplorer];
         });
     }
-        
-        // Do you want a tune?
-        if ([currentID isEqualToString:@"com.apple.springboard"]) {
-            CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)preferencesChanged, CFSTR("com.joshua.VFPB.preferences.changed.tune"), NULL, CFNotificationSuspensionBehaviorCoalesce);
-            
-            preferences = [[NSUserDefaults alloc] initWithSuiteName:@"com.joshua.VFPB.plist"];
 
-            [preferences registerDefaults:@{
-                @"tune": @(tune)
-            }];
-
-            tune = [[preferences objectForKey:@"tune"] boolValue];
-
-%init
-            
-    } else {
-        int regToken;
-        NSString *notifForBundle = [NSString stringWithFormat:@"com.joshua.volumeflex/%@", currentID];
-        notify_register_dispatch(notifForBundle.UTF8String, &regToken, dispatch_get_main_queue(), ^(int token) {
-            dlopen(dylibPath.UTF8String, RTLD_NOW);
-            [[objc_getClass("FLEXManager") sharedManager] showExplorer];
-        });
+    if ([bid isEqualToString:@"com.apple.springboard"]) {
+        %init;
     }
 }
-

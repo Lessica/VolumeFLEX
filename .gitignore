@@ -1,3 +1,4 @@
+.cache/
 .theos/
 packages/
 .DS_Store
@@ -6,4 +7,4 @@ packages/
 project.pbxproj
 UserInterfaceState.xcuserstate
 .fleet/
-Volume FLEX.xcodeproj/
+compile_commands.json
