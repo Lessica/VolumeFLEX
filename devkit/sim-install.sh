@@ -6,7 +6,7 @@ fi
 
 cd "$(dirname "$0")"/.. || exit
 
-LIBRARY_NAMES="libVolumeFLEX"
+LIBRARY_NAMES="libVolumeFLEX libLookinServer"
 
 for LIBRARY_NAME in $LIBRARY_NAMES; do
   sudo rm -f "/opt/simject/$LIBRARY_NAME.dylib"

@@ -1,4 +1,4 @@
-export PACKAGE_VERSION := 1.0
+export PACKAGE_VERSION := 1.1
 export GO_EASY_ON_ME := 1
 
 ifeq ($(THEOS_DEVICE_SIMULATOR),1)
@@ -13,7 +13,7 @@ endif
 
 include $(THEOS)/makefiles/common.mk
 
-LIBRARY_NAME := libVolumeFLEX
+LIBRARY_NAME := libVolumeFLEX libLookinServer
 
 libVolumeFLEX_FILES += dummy.mm
 libVolumeFLEX_CCFLAGS += -std=gnu++11
@@ -29,11 +29,28 @@ libVolumeFLEX_LDFLAGS += -FFrameworks/FLEX.xcframework/ios-arm64_arm64e -framewo
 libVolumeFLEX_SWIFTFLAGS += -FFrameworks/FLEX.xcframework/ios-arm64_arm64e -framework FLEX
 endif
 
+libLookinServer_FILES += dummy.mm
+libLookinServer_LDFLAGS += -Wl,-no_warn_inits
+
+ifeq ($(THEOS_DEVICE_SIMULATOR),1)
+libLookinServer_CFLAGS += -FFrameworks/Simulator/LookinServer.xcframework/ios-arm64_x86_64-simulator -framework LookinServer
+libLookinServer_LDFLAGS += -FFrameworks/Simulator/LookinServer.xcframework/ios-arm64_x86_64-simulator -framework LookinServer -Wl,-all_load
+libLookinServer_SWIFTFLAGS += -FFrameworks/Simulator/LookinServer.xcframework/ios-arm64_x86_64-simulator -framework LookinServer
+else
+libLookinServer_CFLAGS += -FFrameworks/LookinServer.xcframework/ios-arm64_arm64e -framework LookinServer
+libLookinServer_LDFLAGS += -FFrameworks/LookinServer.xcframework/ios-arm64_arm64e -framework LookinServer -Wl,-all_load
+libLookinServer_SWIFTFLAGS += -FFrameworks/LookinServer.xcframework/ios-arm64_arm64e -framework LookinServer
+endif
+
+libLookinServer_FRAMEWORKS += CoreGraphics
+libLookinServer_FRAMEWORKS += QuartzCore
+libLookinServer_FRAMEWORKS += UIKit
+
 include $(THEOS_MAKE_PATH)/library.mk
 
 TWEAK_NAME := VolumeFLEX
 
-VolumeFLEX_FILES += Tweak.xm
+VolumeFLEX_FILES += VolumeFLEX.xm
 
 ifeq ($(THEOS_DEVICE_SIMULATOR),1)
 VolumeFLEX_FILES += libroot/dyn.c

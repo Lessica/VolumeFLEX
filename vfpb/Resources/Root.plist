@@ -1,61 +1,142 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-	<dict>
-		<key>items</key>
-		<array>
-			<dict>
-				<key>cell</key>
-				<string>PSGroupCell</string>
-				<key>footerText</key>
-				<string></string>
-			</dict>
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>footerText</key>
+			<string>This option does not require a respring to take effect.</string>
+		</dict>
 
-			<dict>
-				<key>cell</key>
-				<string>PSSwitchCell</string>
-				<key>default</key>
-				<true/>
-				<key>defaults</key>
-				<string>com.joshua.VFPB.plist</string>
-				<key>key</key>
-				<string>Enabled</string>
-				<key>label</key>
-				<string>Enabled</string>
-				<key>PostNotification</key>
-				<string>com.joshua.VFPB.preferences.changed</string>
-			</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.joshua.VFPB.plist</string>
+			<key>key</key>
+			<string>Enabled</string>
+			<key>label</key>
+			<string>Enabled</string>
+			<key>PostNotification</key>
+			<string>com.joshua.VFPB.preferences.changed</string>
+		</dict>
 
-			<dict>
-				<key>cell</key>
-				<string>PSButtonCell</string>
-				<key>label</key>
-				<string>Donate 😃</string>
-				<key>action</key>
-				<string>donate</string>
-				<key>cellClass</key>
-				<string>PSTableCell</string>
-				<key>isButton</key>
-				<true/>
-				<key>labelColor</key>
-				<string>#007AFF</string>
-			</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Lookin Server</string>
+			<key>footerText</key>
+			<string>This option requires a respring to take effect.</string>
+		</dict>
 
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.joshua.VFPB.plist</string>
+			<key>key</key>
+			<string>EnabledLookinHome</string>
+			<key>label</key>
+			<string>SpringBoard</string>
+			<key>PostNotification</key>
+			<string>com.joshua.VFPB.preferences.changed</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSLinkListCell</string>
+			<key>detail</key>
+			<string>ATLApplicationListMultiSelectionController</string>
+			<key>defaults</key>
+			<string>com.joshua.VFPB.plist</string>
+			<key>key</key>
+			<string>EnabledLookinBundles</string>
+			<key>label</key>
+			<string>Enabled Applications</string>
+			<key>sections</key>
+			<array>
+				<dict>
+					<key>sectionType</key>
+					<string>Visible</string>
+				</dict>
+				<dict>
+					<key>sectionType</key>
+					<string>Hidden</string>
+				</dict>
+			</array>
+			<key>showIdentifiersAsSubtitle</key>
+			<true/>
+			<key>useSearchBar</key>
+			<true/>
+			<key>default</key>
+			<array/>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Respring to Apply Changes</string>
+			<key>action</key>
+			<string>respring</string>
+			<key>confirmation</key>
 			<dict>
-				<key>cell</key>
-				<string>PSGroupCell</string>
-				<key>footerText</key>
-				<string>· @82Flex
-· @leptos
+				<key>title</key>
+				<string>Respring</string>
+				<key>prompt</key>
+				<string>Are you sure you want to respring your device?</string>
+				<key>okTitle</key>
+				<string>Respring</string>
+				<key>cancelTitle</key>
+				<string>Cancel</string>
+			</dict>
+			<key>isDestructive</key>
+			<true/>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSGroupCell</string>
+			<key>label</key>
+			<string>Credits</string>
+			<key>footerText</key>
+			<string>· @leptos
 · @4vyolit
 · @nightwinddev
 · @nowisdev for beautiful icon
 · ipadkid358 for FLEXit
 · LacertosusDeus for 2 of his open-source tweaks
-				</string>
-			</dict>
 
-		</array>
-		<key>title</key>
-		<string>VolumeFLEX</string>
-	</dict>
+Please support our paid works, thank you!
+			</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Donate to Joshua Wheeler</string>
+			<key>action</key>
+			<string>donate</string>
+		</dict>
+
+		<dict>
+			<key>cell</key>
+			<string>PSButtonCell</string>
+			<key>label</key>
+			<string>Made with ♥ by OwnGoal Studio</string>
+			<key>action</key>
+			<string>support</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>VolumeFLEX</string>
+</dict>
 </plist>

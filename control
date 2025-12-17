@@ -6,4 +6,4 @@ Description: The world does not need another FLEX loader but people with fat fin
 Maintainer: Joshua Wheeler
 Author: Joshua Wheeler
 Section: Tweaks
-Depends: mobilesubstrate
+Depends: mobilesubstrate, preferenceloader, com.opa334.altlist
